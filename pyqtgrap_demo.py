@@ -39,18 +39,19 @@ class Plot2D():
     def start(self):
         if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
             QtGui.QApplication.instance().exec_()
-
-    def trace(self,name,dataset_x,dataset_y):
+            
+    def trace1(self,name,dataset_x,dataset_y):
         if name in self.traces:
             self.traces[name].setData(x=dataset_x,y=dataset_y)
-            if dataset_y[-1] > 50:
-                #self.canvas.plot(dataset_x[-1],dataset_y[-1], pen=(255,0,0))
-                self.traces[name].setPen(pg.mkPen('r', width=1.5))
-            else:
-                self.traces[name].setPen(pg.mkPen('g', width=1.5))
-            
         else:
             self.traces[name] = self.canvas.plot(pen=pg.mkPen('g', width=1.5))
+            
+    def trace2(self,name,dataset_x,dataset_y):
+        if name in self.traces:
+            self.traces[name].setData(x=dataset_x,y=dataset_y)
+            #self.canvas.plot(dataset_x[-1],dataset_y[-1], pen=(255,0,0))       
+        else:
+            self.traces[name] = self.canvas.plot(pen=pg.mkPen('r', width=1.5))
             
 
 ## Start Qt event loop unless running in interactive mode or using pyside.
@@ -76,9 +77,14 @@ if __name__ == '__main__':
     a = 0
     b = []
     d = []
+    f = []
+    h = []
+    co = 0
+    ho = 1000
+    z = 1
     
     def update():
-        global p, i, count, pct, a, time, list_y, list_x, b, d, df
+        global p, i, count, pct, a, time, list_y, list_x, b, d, df, f, h, co, ho, z
         if a < 1000:
 #             j = pct.iloc[[a]]
 #             print(g,j)
@@ -86,19 +92,44 @@ if __name__ == '__main__':
             t = np.arange(0,100,0.1)
             s = sin(2 * pi * t + i)
             #c = cos(2 * pi * t + i)
-            b.append(time[a].timestamp())
             #print(a)
             #print(b)
-            d.append(pct[a])
+            if pct[a] < 55:
+                if z == 0:
+                    d.append(pct[a])
+                    b.append(time[a].timestamp())
+                    p.trace1(str(ho),b,d)
+                else:
+                    b = []
+                    d = []
+                    ho += 1
+                    d.append(f[-1])
+                    b.append(h[-1])
+                    p.trace1(str(ho),b,d)
+                    ho += 1
+                    z = 0
+            else:
+                if z == 1:
+                    f.append(pct[a])
+                    h.append(time[a].timestamp())
+                    p.trace2(str(co),h,f)
+                else:
+                    f = []
+                    h = []
+                    co += 1
+                    f.append(d[-1])
+                    h.append(b[-1])
+                    p.trace2(str(co),h,f)
+                    z = 1
+                    
             #print(b)
             count +=1
-            p.trace("allas",b,d)
             #p.trace("cos",t,c,count)
             i += 0.1
             a += 1
 
     timer = QtCore.QTimer()
     timer.timeout.connect(update)
-    timer.start(30)
+    timer.start(15)
 
     p.start()
